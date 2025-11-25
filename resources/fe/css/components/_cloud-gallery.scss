@@ -1,0 +1,41 @@
+.cloud-gallery {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+
+    .images-area {
+        width: 80%;
+        height: 550px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    img {
+        position: absolute;
+        transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        //filter: blur(1px);
+        //opacity: 0.6;
+        z-index: 1;
+        max-width: 600px;
+        height: auto;
+
+        &.active {
+            width: 60% !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) scale(1) rotate(0deg) !important;
+            opacity: 1 !important;
+            z-index: 1000 !important;
+            filter: blur(0);
+
+            @media (max-width: 768px) {
+                width: 80% !important;
+                max-width: none;
+            }
+        }
+    }
+}

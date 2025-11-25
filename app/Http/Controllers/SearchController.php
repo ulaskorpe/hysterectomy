@@ -1,0 +1,87 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Content;
+use Illuminate\Support\Str;
+use Illuminate\Http\Request;
+use Spatie\Searchable\Search;
+use App\Settings\GlobalSettings;
+use Spatie\Searchable\ModelSearchAspect;
+
+class SearchController extends Controller
+{
+    
+    public function blog(Request $request){
+
+        $search = $request->search;
+        $searchResults = null;
+
+        if( $search ){
+            $searchResults = (new Search())
+            ->registerModel(Content::class, function(ModelSearchAspect $modelSearchAspect) {
+                    $modelSearchAspect
+                    ->addSearchableAttribute('name')
+                    ->addSearchableAttribute('summary')
+                    ->addSearchableAttribute('content')
+                    ->where('content_type_id',2)
+                    ->with([
+                        'content_categories','main_image'
+                    ]);
+            })
+            ->limitAspectResults(50)
+            ->search($search);
+        }
+
+        return view('search.blog',[
+            'searchResults' => $searchResults,
+            'queryParam' => $search
+        ]);
+
+    }
+
+    public function content(Request $request){
+
+        $lang = $request->language;
+
+        if( !$lang ){
+            $lang = config('languages.default');
+        }
+
+        app()->setLocale($lang);
+
+        $search = $request->search;
+        $searchResults = null;
+
+        if( $search && Str::length($search) > 2){
+            $searchResults = (new Search())
+            ->registerModel(Content::class, function(ModelSearchAspect $modelSearchAspect) {
+                $modelSearchAspect
+                ->addSearchableAttribute('name')
+                ->addSearchableAttribute('summary')
+                ->addSearchableAttribute('content')
+                ->addSearchableAttribute('description')
+                ->select('id','name','language','summary','content_type_id','depending_content_id','additional','seo')
+                ->whereHas('uri')
+                ->with([
+                    'content_type:id,name',
+                    'library_media',
+                    'depending_content:id,name,depending_content_id',
+                    'uri:linkable_id,final_uri',
+                ])
+                ->where('uuid','!=',app(GlobalSettings::class)->home_page);
+            })
+            ->search($search);
+        }
+
+        seo()->title(__('Arama sonuçları:').' '.$search);
+        seo()->description(__('Arama sonuçları:').' '.$search);
+
+        return view('search.content',[
+            'searchResults' => $searchResults,
+            'queryParam' => $search
+        ]);
+
+    }
+
+}
